@@ -6,10 +6,16 @@ const readline = require('readline');
 
 // ─── 設定 ────────────────────────────────────────────────────────────────────
 
+// [HIGH fix] NaN 検証: 不正な環境変数値はデフォルト値にフォールバック
+function parsePositiveInt(value, defaultValue) {
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : defaultValue;
+}
+
 const CONFIG = {
-  WORK_MINUTES: parseInt(process.env.WORK_MINUTES ?? '25', 10),
-  SHORT_BREAK_MINUTES: parseInt(process.env.SHORT_BREAK_MINUTES ?? '5', 10),
-  LONG_BREAK_MINUTES: parseInt(process.env.LONG_BREAK_MINUTES ?? '15', 10),
+  WORK_MINUTES: parsePositiveInt(process.env.WORK_MINUTES, 25),
+  SHORT_BREAK_MINUTES: parsePositiveInt(process.env.SHORT_BREAK_MINUTES, 5),
+  LONG_BREAK_MINUTES: parsePositiveInt(process.env.LONG_BREAK_MINUTES, 15),
   LONG_BREAK_AFTER: 4,
   PROGRESS_BAR_WIDTH: 30,
 };
@@ -48,14 +54,11 @@ function colorize(text, ...codes) {
   return codes.join('') + text + COLOR.reset;
 }
 
-function padStart(num, width) {
-  return String(num).padStart(width, '0');
-}
-
+// [LOW fix] padStart は formatTime 内でインライン化（1 箇所のみ使用）
 function formatTime(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${padStart(minutes, 2)}:${padStart(seconds, 2)}`;
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
 }
 
 function buildProgressBar(elapsed, total) {
@@ -117,6 +120,7 @@ function nextSession(state) {
 
 // ─── 表示 ─────────────────────────────────────────────────────────────────────
 
+// [MEDIUM fix] default ケースを追加して未知のセッション種別でも安全に動作
 function sessionLabel(session) {
   switch (session) {
     case SESSION.WORK:
@@ -125,6 +129,8 @@ function sessionLabel(session) {
       return colorize(' ☕ 短い休憩 ', COLOR.bold, COLOR.bgGreen, COLOR.white);
     case SESSION.LONG_BREAK:
       return colorize(' 🌿 長い休憩 ', COLOR.bold, COLOR.bgBlue, COLOR.white);
+    default:
+      return colorize(` ${session} `, COLOR.bold);
   }
 }
 
@@ -136,15 +142,19 @@ function sessionColor(session) {
       return COLOR.green;
     case SESSION.LONG_BREAK:
       return COLOR.blue;
+    default:
+      return COLOR.white;
   }
 }
 
+// [LOW fix] Array.from で慣用的に記述
+// [LOW fix] 4 個完了時（長い休憩に入るタイミング）は全部 🍅 を表示
 function renderPomodoroDots(count) {
-  const dots = [];
-  for (let i = 0; i < CONFIG.LONG_BREAK_AFTER; i++) {
-    dots.push(i < count % CONFIG.LONG_BREAK_AFTER ? '🍅' : '○');
-  }
-  return dots.join(' ');
+  const progress = count % CONFIG.LONG_BREAK_AFTER || (count > 0 ? CONFIG.LONG_BREAK_AFTER : 0);
+  return Array.from(
+    { length: CONFIG.LONG_BREAK_AFTER },
+    (_, i) => i < progress ? '🍅' : '○'
+  ).join(' ');
 }
 
 function render(state) {
@@ -214,15 +224,21 @@ function renderFinal(completedPomodoros) {
 // ─── メインループ ─────────────────────────────────────────────────────────────
 
 function run() {
+  // [MEDIUM fix] 非 TTY 環境（パイプ・CI）では操作不能になるため早期終了
+  if (!process.stdin.isTTY) {
+    console.error('Error: このツールはインタラクティブな TTY 環境でのみ使用できます。');
+    process.exit(1);
+  }
+
   let state = createState();
 
   // stdin をキャラクター入力モードに設定
   readline.emitKeypressEvents(process.stdin);
-  if (process.stdin.isTTY) {
-    process.stdin.setRawMode(true);
-  }
+  process.stdin.setRawMode(true);
 
   let tickInterval = null;
+  // [HIGH fix] セッション完了後の遷移タイマーを保持（skipSession でキャンセル可能にする）
+  let pendingTransitionId = null;
 
   function startTick() {
     if (tickInterval) return;
@@ -249,7 +265,9 @@ function run() {
 
   function handleSessionComplete() {
     renderComplete(state.session);
-    setTimeout(() => {
+    // [HIGH fix] ID を保持して skipSession からキャンセルできるようにする
+    pendingTransitionId = setTimeout(() => {
+      pendingTransitionId = null;
       state = nextSession(state);
       render(state);
       startTick();
@@ -257,6 +275,11 @@ function run() {
   }
 
   function skipSession() {
+    // [HIGH fix] 完了待機中の遷移タイマーをキャンセルして二重遷移を防ぐ
+    if (pendingTransitionId) {
+      clearTimeout(pendingTransitionId);
+      pendingTransitionId = null;
+    }
     stopTick();
     state = nextSession(state);
     render(state);
@@ -264,11 +287,13 @@ function run() {
   }
 
   function quit() {
+    if (pendingTransitionId) {
+      clearTimeout(pendingTransitionId);
+      pendingTransitionId = null;
+    }
     stopTick();
     state = { ...state, running: false };
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(false);
-    }
+    process.stdin.setRawMode(false);
     renderFinal(state.completedPomodoros);
     process.exit(0);
   }
