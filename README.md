@@ -13,8 +13,9 @@
 | --- | ------------ | ------------ | -------------- |
 | 001 | [habit-tracker](./day001_habit-tracker) | Go | 習慣管理 CLI。ストリーク・30日カレンダー付き |
 | 002 | [pomodoro-timer](./day002_pomodoro-timer) | JavaScript (Node.js) | ターミナル版ポモドーロタイマー。ANSI カラー・プログレスバー付き |
+| 003 | [quiz-game](./day003_quiz-game) | JavaScript (Node.js) | JS 基礎を学べる CLI クイズゲーム。詳細コード解説付き |
 
-完了: 2 / 100
+完了: 3 / 100
 
 ---
 
@@ -23,7 +24,7 @@
 | 言語 | 回数 |
 | ---- | ---- |
 | Go | 1 |
-| JavaScript | 1 |
+| JavaScript | 2 |
 
 ---
 
