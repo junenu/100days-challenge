@@ -15,8 +15,9 @@
 | 002 | [pomodoro-timer](./day002_pomodoro-timer) | JavaScript (Node.js) | ターミナル版ポモドーロタイマー。ANSI カラー・プログレスバー付き |
 | 003 | [quiz-game](./day003_quiz-game) | JavaScript (Node.js) | JS 基礎を学べる CLI クイズゲーム。詳細コード解説付き |
 | 004 | [expense-tracker](./day004_expense-tracker) | Python | CLI 家計簿。CSV 永続化・カテゴリ別 ASCII バーグラフ付き |
+| 005 | [notes-api](./day005_notes-api) | Go | メモ管理 REST API。CRUD + 全文検索・JSON ファイル永続化 |
 
-完了: 4 / 100
+完了: 5 / 100
 
 ---
 
@@ -24,7 +25,7 @@
 
 | 言語 | 回数 |
 | ---- | ---- |
-| Go | 1 |
+| Go | 2 |
 | JavaScript | 2 |
 | Python | 1 |
 
