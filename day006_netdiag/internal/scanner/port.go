@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net"
 	"sort"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -38,6 +40,10 @@ var commonServices = map[int]string{
 }
 
 func Scan(host string, ports []int, concurrency int, timeout time.Duration) (*ScanResult, error) {
+	if concurrency < 1 {
+		return nil, fmt.Errorf("concurrency must be >= 1, got %d", concurrency)
+	}
+
 	ips, err := net.LookupHost(host)
 	if err != nil {
 		return nil, fmt.Errorf("host resolution failed: %w", err)
@@ -47,28 +53,32 @@ func Scan(host string, ports []int, concurrency int, timeout time.Duration) (*Sc
 	start := time.Now()
 	result := &ScanResult{Host: host, IP: ip}
 
-	sem := make(chan struct{}, concurrency)
+	// worker pool: concurrency 数の worker を固定して順にポートを処理する
+	jobs := make(chan int, len(ports))
+	for _, p := range ports {
+		jobs <- p
+	}
+	close(jobs)
+
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
-	for _, port := range ports {
+	for i := 0; i < concurrency; i++ {
 		wg.Add(1)
-		go func(p int) {
+		go func() {
 			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			state := probe(ip, p, timeout)
-			if state == StateOpen {
-				mu.Lock()
-				result.Ports = append(result.Ports, PortResult{
-					Port:    p,
-					State:   state,
-					Service: serviceOf(p),
-				})
-				mu.Unlock()
+			for p := range jobs {
+				if probe(ip, p, timeout) == StateOpen {
+					mu.Lock()
+					result.Ports = append(result.Ports, PortResult{
+						Port:    p,
+						State:   StateOpen,
+						Service: serviceOf(p),
+					})
+					mu.Unlock()
+				}
 			}
-		}(port)
+		}()
 	}
 
 	wg.Wait()
@@ -97,10 +107,12 @@ func serviceOf(port int) string {
 }
 
 func ParsePortRange(rangeStr string) ([]int, error) {
-	var start, end int
-	n, err := fmt.Sscanf(rangeStr, "%d-%d", &start, &end)
-	if n == 2 && err == nil {
-		if start < 1 || end > 65535 || start > end {
+	// 範囲指定: "1-1024"
+	if strings.Contains(rangeStr, "-") {
+		parts := strings.SplitN(rangeStr, "-", 2)
+		start, err1 := parsePort(parts[0])
+		end, err2 := parsePort(parts[1])
+		if err1 != nil || err2 != nil || start > end {
 			return nil, fmt.Errorf("invalid port range: %s", rangeStr)
 		}
 		ports := make([]int, end-start+1)
@@ -110,11 +122,21 @@ func ParsePortRange(rangeStr string) ([]int, error) {
 		return ports, nil
 	}
 
-	var port int
-	if _, err := fmt.Sscanf(rangeStr, "%d", &port); err != nil {
-		return nil, fmt.Errorf("invalid port: %s", rangeStr)
+	// 単一ポート: "80"
+	port, err := parsePort(rangeStr)
+	if err != nil {
+		return nil, err
 	}
 	return []int{port}, nil
+}
+
+func parsePort(s string) (int, error) {
+	s = strings.TrimSpace(s)
+	port, err := strconv.Atoi(s)
+	if err != nil || port < 1 || port > 65535 {
+		return 0, fmt.Errorf("invalid port: %s (must be 1-65535)", s)
+	}
+	return port, nil
 }
 
 func CommonPorts() []int {

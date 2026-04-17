@@ -1,7 +1,9 @@
 package scanner
 
 import (
+	"net"
 	"testing"
+	"time"
 )
 
 func TestParsePortRange(t *testing.T) {
@@ -11,12 +13,21 @@ func TestParsePortRange(t *testing.T) {
 		wantErr bool
 	}{
 		{"80", []int{80}, false},
+		{"1", []int{1}, false},
+		{"65535", []int{65535}, false},
 		{"1-5", []int{1, 2, 3, 4, 5}, false},
 		{"443-445", []int{443, 444, 445}, false},
+		// 異常系: 範囲指定
 		{"0-1", nil, true},
 		{"1-65536", nil, true},
 		{"100-50", nil, true},
+		// 異常系: 単一ポート
+		{"0", nil, true},
+		{"65536", nil, true},
 		{"abc", nil, true},
+		{"80abc", nil, true},
+		{"", nil, true},
+		{"-1", nil, true},
 	}
 
 	for _, tt := range tests {
@@ -75,15 +86,41 @@ func TestCommonPorts(t *testing.T) {
 	}
 }
 
-func TestScan_Localhost(t *testing.T) {
-	result, err := Scan("127.0.0.1", []int{65500, 65501, 65502}, 10, 100*1000*1000)
+func TestScan_OpenAndClosed(t *testing.T) {
+	// 一時 TCP サーバーを立てて open/closed 両方を検証する
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("failed to listen: %v", err)
+	}
+	defer ln.Close()
+
+	openPort := ln.Addr().(*net.TCPAddr).Port
+	// 確実に閉じているポート (一時的に Listen してすぐ Close)
+	ln2, _ := net.Listen("tcp", "127.0.0.1:0")
+	closedPort := ln2.Addr().(*net.TCPAddr).Port
+	ln2.Close()
+
+	result, err := Scan("127.0.0.1", []int{openPort, closedPort}, 10, 500*time.Millisecond)
 	if err != nil {
 		t.Fatalf("Scan error: %v", err)
 	}
-	if result.IP == "" {
-		t.Error("expected non-empty IP")
+
+	if len(result.Ports) != 1 {
+		t.Fatalf("expected 1 open port, got %d: %v", len(result.Ports), result.Ports)
 	}
-	if result.Elapsed <= 0 {
-		t.Error("expected positive elapsed time")
+	if result.Ports[0].Port != openPort {
+		t.Errorf("expected open port %d, got %d", openPort, result.Ports[0].Port)
+	}
+}
+
+func TestScan_InvalidConcurrency(t *testing.T) {
+	_, err := Scan("127.0.0.1", []int{80}, 0, time.Second)
+	if err == nil {
+		t.Error("expected error for concurrency=0, got nil")
+	}
+
+	_, err = Scan("127.0.0.1", []int{80}, -1, time.Second)
+	if err == nil {
+		t.Error("expected error for concurrency=-1, got nil")
 	}
 }

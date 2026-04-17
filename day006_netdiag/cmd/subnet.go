@@ -22,11 +22,6 @@ var subnetCmd = &cobra.Command{
 			return err
 		}
 
-		privateStr := "No"
-		if info.IsPrivate {
-			privateStr = "Yes (RFC1918)"
-		}
-
 		fmt.Printf("\n[ Subnet Calculator: %s ]\n\n", args[0])
 
 		table := tablewriter.NewWriter(os.Stdout)
@@ -40,7 +35,7 @@ var subnetCmd = &cobra.Command{
 			{"Total Hosts", fmt.Sprintf("%d", info.TotalHosts)},
 			{"Usable Hosts", fmt.Sprintf("%d", info.UsableHosts)},
 			{"IP Class", info.Class},
-			{"Private Range", privateStr},
+			{"Address Type", string(info.AddrType)},
 		}
 
 		for _, row := range rows {

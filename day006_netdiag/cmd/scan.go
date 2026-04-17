@@ -30,6 +30,13 @@ var scanCmd = &cobra.Command{
 		host := args[0]
 		timeout := time.Duration(scanTimeout) * time.Millisecond
 
+		if scanConcurrency < 1 {
+			return fmt.Errorf("--concurrency must be >= 1, got %d", scanConcurrency)
+		}
+		if scanTimeout < 1 {
+			return fmt.Errorf("--timeout must be >= 1ms, got %d", scanTimeout)
+		}
+
 		var ports []int
 		if scanCommon {
 			ports = scanner.CommonPorts()

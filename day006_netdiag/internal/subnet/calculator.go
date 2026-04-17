@@ -2,8 +2,17 @@ package subnet
 
 import (
 	"fmt"
-	"math"
 	"net"
+)
+
+// AddressType はアドレス空間の種別を表す。
+type AddressType string
+
+const (
+	AddressTypePublic   AddressType = "Public"
+	AddressTypeRFC1918  AddressType = "Private (RFC1918)"
+	AddressTypeLoopback AddressType = "Loopback"
+	AddressTypeLinkLocal AddressType = "Link-local"
 )
 
 type Info struct {
@@ -17,7 +26,7 @@ type Info struct {
 	UsableHosts uint64
 	NetworkAddr net.IP
 	Class       string
-	IsPrivate   bool
+	AddrType    AddressType
 }
 
 func Calculate(cidr string) (*Info, error) {
@@ -26,10 +35,17 @@ func Calculate(cidr string) (*Info, error) {
 		return nil, fmt.Errorf("invalid CIDR: %w", err)
 	}
 
+	if ip.To4() == nil {
+		return nil, fmt.Errorf("IPv6 is not supported: %s", cidr)
+	}
+
 	ones, bits := network.Mask.Size()
-	totalHosts := uint64(math.Pow(2, float64(bits-ones)))
+	hostBits := bits - ones
+
+	// /32 と /31 は特殊: ホスト数をそのまま使う
+	totalHosts := uint64(1) << uint(hostBits)
 	usableHosts := totalHosts
-	if ones < bits {
+	if hostBits >= 2 {
 		usableHosts = totalHosts - 2
 	}
 
@@ -40,13 +56,13 @@ func Calculate(cidr string) (*Info, error) {
 
 	firstHost := make(net.IP, len(network.IP))
 	copy(firstHost, network.IP)
-	if ones < bits {
+	if hostBits >= 2 {
 		firstHost[len(firstHost)-1]++
 	}
 
 	lastHost := make(net.IP, len(broadcast))
 	copy(lastHost, broadcast)
-	if ones < bits {
+	if hostBits >= 2 {
 		lastHost[len(lastHost)-1]--
 	}
 
@@ -61,7 +77,7 @@ func Calculate(cidr string) (*Info, error) {
 		UsableHosts: usableHosts,
 		NetworkAddr: network.IP,
 		Class:       classOf(ip),
-		IsPrivate:   isPrivate(ip),
+		AddrType:    addrTypeOf(ip),
 	}, nil
 }
 
@@ -84,20 +100,25 @@ func classOf(ip net.IP) string {
 	}
 }
 
-var privateRanges = []string{
-	"10.0.0.0/8",
-	"172.16.0.0/12",
-	"192.168.0.0/16",
-	"127.0.0.0/8",
-	"169.254.0.0/16",
+type addrRange struct {
+	cidr     string
+	addrType AddressType
 }
 
-func isPrivate(ip net.IP) bool {
-	for _, cidr := range privateRanges {
-		_, network, _ := net.ParseCIDR(cidr)
+var addrRanges = []addrRange{
+	{"127.0.0.0/8", AddressTypeLoopback},
+	{"169.254.0.0/16", AddressTypeLinkLocal},
+	{"10.0.0.0/8", AddressTypeRFC1918},
+	{"172.16.0.0/12", AddressTypeRFC1918},
+	{"192.168.0.0/16", AddressTypeRFC1918},
+}
+
+func addrTypeOf(ip net.IP) AddressType {
+	for _, r := range addrRanges {
+		_, network, _ := net.ParseCIDR(r.cidr)
 		if network.Contains(ip) {
-			return true
+			return r.addrType
 		}
 	}
-	return false
+	return AddressTypePublic
 }

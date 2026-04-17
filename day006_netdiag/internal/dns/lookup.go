@@ -20,10 +20,14 @@ const (
 	TypePTR   RecordType = "PTR"
 )
 
+var validTypes = map[RecordType]bool{
+	TypeA: true, TypeAAAA: true, TypeMX: true,
+	TypeNS: true, TypeCNAME: true, TypeTXT: true,
+}
+
 type Record struct {
 	Type  RecordType
 	Value string
-	TTL   string
 }
 
 type Result struct {
@@ -33,25 +37,41 @@ type Result struct {
 }
 
 func Lookup(domain string, types []string) (*Result, error) {
-	resolver := &net.Resolver{
-		PreferGo: true,
+	if len(types) == 0 {
+		types = []string{"A", "AAAA", "CNAME", "MX", "NS", "TXT"}
 	}
+
+	// 未知のタイプを事前に reject
+	for _, t := range types {
+		rt := RecordType(strings.ToUpper(t))
+		if !validTypes[rt] {
+			return nil, fmt.Errorf("unsupported record type: %s (supported: A, AAAA, MX, NS, CNAME, TXT)", t)
+		}
+	}
+
+	resolver := &net.Resolver{PreferGo: true}
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	start := time.Now()
 	result := &Result{Domain: domain}
 
-	if len(types) == 0 {
-		types = []string{"A", "AAAA", "CNAME", "MX", "NS", "TXT"}
-	}
+	var lastErr error
+	successCount := 0
 
 	for _, t := range types {
 		records, err := lookupType(ctx, resolver, domain, RecordType(strings.ToUpper(t)))
 		if err != nil {
+			lastErr = err
 			continue
 		}
+		successCount++
 		result.Records = append(result.Records, records...)
+	}
+
+	// 全タイプが失敗した場合はエラーを返す
+	if successCount == 0 && lastErr != nil {
+		return nil, fmt.Errorf("all lookups failed for %s: %w", domain, lastErr)
 	}
 
 	result.Elapsed = time.Since(start)
