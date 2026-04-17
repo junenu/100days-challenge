@@ -7,7 +7,7 @@ build:
 	$(BUILD_FLAGS) go build -o $(BINARY) .
 
 test:
-	go test ./...
+	$(BUILD_FLAGS) go test ./...
 
 install: build
 	cp $(BINARY) /usr/local/bin/$(BINARY)
