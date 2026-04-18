@@ -5,6 +5,10 @@
 React + Vite + Recharts で作成した、モックデータのみを使う天気ダッシュボード。
 東京・大阪・札幌・福岡・沖縄の 5 地域を切り替えながら、今日の概要・7 日間予報・24 時間の気温推移と降水確率を一画面で確認できる。
 
+## スクリーンショット
+
+![Weather Board](screenshot.png)
+
 ## 技術スタック
 
 - Language: JavaScript (JSX)
