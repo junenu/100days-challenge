@@ -18,8 +18,9 @@
 | 005 | [notes-api](./day005_notes-api) | Go | メモ管理 REST API。CRUD + 全文検索・JSON ファイル永続化 |
 | 006 | [netdiag](./day006_netdiag) | Go (cobra/tablewriter) | ネットワーク診断 CLI。ping/traceroute/DNS/ポートスキャン |
 | 007 | [weather-board](./day007_weather-board) | React + Vite + Recharts | モックデータの天気ダッシュボード。5 地域切替・グラフ付き |
+| 008 | [pet-cli](./day008_pet-cli) | Go (cobra) | ターミナル育成ペット。時間経過でステータス減衰・顔文字で感情表現 |
 
-完了: 7 / 100
+完了: 8 / 100
 
 ---
 
@@ -27,7 +28,7 @@
 
 | 言語 | 回数 |
 | ---- | ---- |
-| Go | 3 |
+| Go | 4 |
 | JavaScript | 2 |
 | Python | 1 |
 | React (JSX) | 1 |
