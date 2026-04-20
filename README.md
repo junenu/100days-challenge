@@ -19,8 +19,9 @@
 | 006 | [netdiag](./day006_netdiag) | Go (cobra/tablewriter) | ネットワーク診断 CLI。ping/traceroute/DNS/ポートスキャン |
 | 007 | [weather-board](./day007_weather-board) | React + Vite + Recharts | モックデータの天気ダッシュボード。5 地域切替・グラフ付き |
 | 008 | [pet-cli](./day008_pet-cli) | Go (cobra) | ターミナル育成ペット。時間経過でステータス減衰・顔文字で感情表現 |
+| 009 | [markdown-preview](./day009_markdown-preview) | Node.js (ESM) | Markdown をターミナルでカラー整形表示する CLI ビューワー |
 
-完了: 8 / 100
+完了: 9 / 100
 
 ---
 
@@ -29,7 +30,7 @@
 | 言語 | 回数 |
 | ---- | ---- |
 | Go | 4 |
-| JavaScript | 2 |
+| JavaScript (Node.js) | 3 |
 | Python | 1 |
 | React (JSX) | 1 |
 
