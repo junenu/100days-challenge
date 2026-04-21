@@ -1,0 +1,13 @@
+{
+  "name": "Alice",
+  "age": 31,
+  "address": {
+    "city": "Osaka",
+    "zip": "100-0001",
+    "country": "Japan"
+  },
+  "hobbies": ["reading", "gaming", "hiking"],
+  "active": false,
+  "score": 95.5,
+  "nickname": "Ali"
+}
