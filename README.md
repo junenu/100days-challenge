@@ -20,8 +20,9 @@
 | 007 | [weather-board](./day007_weather-board) | React + Vite + Recharts | モックデータの天気ダッシュボード。5 地域切替・グラフ付き |
 | 008 | [pet-cli](./day008_pet-cli) | Go (cobra) | ターミナル育成ペット。時間経過でステータス減衰・顔文字で感情表現 |
 | 009 | [markdown-preview](./day009_markdown-preview) | Node.js (ESM) | Markdown をターミナルでカラー整形表示する CLI ビューワー |
+| 010 | [json-diff](./day010_json-diff) | Python | 2 つの JSON を比較して差分を色付き表示する CLI ツール |
 
-完了: 9 / 100
+完了: 10 / 100
 
 ---
 
@@ -31,7 +32,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 1 |
+| Python | 2 |
 | React (JSX) | 1 |
 
 ---
