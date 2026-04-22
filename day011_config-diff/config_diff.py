@@ -58,7 +58,7 @@ class SectionDiff:
 # ---------------------------------------------------------------------------
 
 def parse_sections(text: str) -> dict[str, Section]:
-    """設定テキストをセクション単位（行頭が空白でない行をヘッダーとして）に分割する。"""
+    """Cisco IOS 形式の設定テキストをセクション単位に分割する（行頭が空白でない行をヘッダー）。"""
     sections: dict[str, Section] = {}
     current: Section | None = None
 
@@ -79,6 +79,71 @@ def parse_sections(text: str) -> dict[str, Section]:
             current.lines.append(line)
 
     return sections
+
+
+def parse_juniper_sections(text: str) -> dict[str, Section]:
+    """Juniper JunOS 形式の設定テキストをトップレベルブロック単位に分割する。
+
+    行頭が空白でない行を検出し、`keyword { ... }` のブレース対応でブロック境界を判定する。
+    `version 22.4R1;` のような単一行ステートメントも独立セクションとして扱う。
+    """
+    sections: dict[str, Section] = {}
+    lines = text.splitlines()
+    i = 0
+
+    while i < len(lines):
+        raw = lines[i].rstrip()
+        stripped = raw.strip()
+
+        if not stripped or stripped.startswith("#") or stripped.startswith("/*"):
+            i += 1
+            continue
+
+        if raw and not raw[0].isspace():
+            if "{" in raw:
+                # ブレースブロック開始
+                name = raw.split("{")[0].strip()
+                sec = Section(name=name)
+                sections[name] = sec
+                sec.lines.append(raw)
+
+                depth = raw.count("{") - raw.count("}")
+                i += 1
+                while i < len(lines) and depth > 0:
+                    sl = lines[i].rstrip()
+                    sec.lines.append(sl)
+                    depth += sl.count("{") - sl.count("}")
+                    i += 1
+            else:
+                # 単一行ステートメント（version, description など）
+                name = raw.rstrip(";").strip()
+                sec = Section(name=name)
+                sec.lines.append(raw)
+                sections[name] = sec
+                i += 1
+        else:
+            i += 1
+
+    return sections
+
+
+def detect_format(text: str) -> str:
+    """設定テキストのフォーマット ('cisco' / 'juniper') を自動検出する。"""
+    brace_lines = sum(1 for ln in text.splitlines() if "{" in ln or "}" in ln)
+    cisco_bang_lines = sum(1 for ln in text.splitlines() if ln.strip() == "!")
+    return "juniper" if brace_lines > cisco_bang_lines else "cisco"
+
+
+def parse_config(text: str, fmt: str | None = None) -> tuple[dict[str, Section], str]:
+    """設定テキストを解析してセクション辞書と使用フォーマットを返す。
+
+    fmt が None の場合は detect_format() で自動判定する。
+    """
+    if fmt is None:
+        fmt = detect_format(text)
+    if fmt == "juniper":
+        return parse_juniper_sections(text), "juniper"
+    return parse_sections(text), "cisco"
 
 
 # ---------------------------------------------------------------------------
@@ -218,16 +283,22 @@ _HTML = """\
   }
   .input-box textarea:focus { border-color: var(--blue); }
 
-  .controls { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+  .controls { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
   .controls input {
-    flex: 1; background: var(--surface); border: 1px solid var(--surface2); border-radius: 6px;
+    flex: 1; min-width: 180px; background: var(--surface); border: 1px solid var(--surface2); border-radius: 6px;
     color: var(--text); padding: 8px 12px; font-family: inherit; font-size: 12px; outline: none;
   }
   .controls input:focus { border-color: var(--blue); }
   .controls input::placeholder { color: var(--gray); }
+  .controls select {
+    background: var(--surface); border: 1px solid var(--surface2); border-radius: 6px;
+    color: var(--text); padding: 8px 10px; font-family: inherit; font-size: 12px; outline: none; cursor: pointer;
+  }
+  .controls select:focus { border-color: var(--blue); }
   .btn { background: var(--blue); color: var(--bg); border: none; border-radius: 6px; padding: 8px 20px; font-weight: 700; cursor: pointer; font-size: 13px; }
   .btn:hover { opacity: 0.85; }
   .btn-ghost { background: var(--surface2); color: var(--text); }
+  .badge-format { background: rgba(137,180,250,0.15); color: var(--blue); }
 
   /* Summary */
   .summary { display: flex; gap: 16px; margin-bottom: 16px; padding: 12px 16px; background: var(--surface); border-radius: 8px; border: 1px solid var(--surface2); }
@@ -301,9 +372,15 @@ _HTML = """\
   </div>
 
   <div class="controls">
-    <input id="filter" placeholder="セクションフィルター（例: acl, route-map, interface, ospf）">
+    <input id="filter" placeholder="セクションフィルター（例: firewall, interface, policy-options）">
+    <select id="format" title="フォーマット">
+      <option value="auto">自動検出</option>
+      <option value="cisco">Cisco IOS</option>
+      <option value="juniper">Juniper JunOS</option>
+    </select>
     <button class="btn" onclick="compare()">比較する</button>
-    <button class="btn btn-ghost" onclick="loadSample()">サンプルを読み込む</button>
+    <button class="btn btn-ghost" onclick="loadSample('cisco')">Cisco サンプル</button>
+    <button class="btn btn-ghost" onclick="loadSample('juniper')">Juniper サンプル</button>
   </div>
 
   <div id="results">
@@ -337,6 +414,7 @@ async function compare() {
   const before = document.getElementById('before').value.trim();
   const after = document.getElementById('after').value.trim();
   const filter = document.getElementById('filter').value.trim();
+  const format = document.getElementById('format').value;
 
   if (!before && !after) {
     alert('設定テキストを入力してください。');
@@ -346,16 +424,16 @@ async function compare() {
   const res = await fetch('/api/diff', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ before, after, filter }),
+    body: JSON.stringify({ before, after, filter, format: format === 'auto' ? null : format }),
   });
 
   const data = await res.json();
   _diffs = data.diffs;
   _activeIdx = -1;
-  renderResults();
+  renderResults(data.format);
 }
 
-function renderResults() {
+function renderResults(detectedFmt) {
   const results = document.getElementById('results');
   results.style.display = 'block';
 
@@ -363,7 +441,9 @@ function renderResults() {
   const cnt = { added: 0, removed: 0, changed: 0, unchanged: 0 };
   for (const d of _diffs) cnt[d.status]++;
 
+  const fmtLabel = detectedFmt === 'juniper' ? 'Juniper JunOS' : 'Cisco IOS';
   document.getElementById('summary').innerHTML = `
+    <div class="summary-item"><span class="badge badge-format">${fmtLabel}</span></div>
     <div class="summary-item">セクション合計: <strong>${_diffs.length}</strong></div>
     <div class="summary-item"><span class="badge badge-added">+ 追加</span> <strong>${cnt.added}</strong></div>
     <div class="summary-item"><span class="badge badge-removed">- 削除</span> <strong>${cnt.removed}</strong></div>
@@ -474,12 +554,19 @@ function esc(s) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function loadSample() {
-  document.getElementById('before').value = SAMPLE_BEFORE;
-  document.getElementById('after').value = SAMPLE_AFTER;
+function loadSample(type) {
+  if (type === 'juniper') {
+    document.getElementById('before').value = SAMPLE_JUNIPER_BEFORE;
+    document.getElementById('after').value = SAMPLE_JUNIPER_AFTER;
+    document.getElementById('format').value = 'juniper';
+  } else {
+    document.getElementById('before').value = SAMPLE_CISCO_BEFORE;
+    document.getElementById('after').value = SAMPLE_CISCO_AFTER;
+    document.getElementById('format').value = 'cisco';
+  }
 }
 
-const SAMPLE_BEFORE = `!
+const SAMPLE_CISCO_BEFORE = `!
 hostname Router-A
 !
 interface GigabitEthernet0/0
@@ -503,7 +590,7 @@ route-map POLICY permit 10
  set local-preference 100
 !`;
 
-const SAMPLE_AFTER = `!
+const SAMPLE_CISCO_AFTER = `!
 hostname Router-A
 !
 interface GigabitEthernet0/0
@@ -533,6 +620,208 @@ route-map POLICY permit 10
  match ip address PERMIT-WEB
  set local-preference 150
 !`;
+
+const SAMPLE_JUNIPER_BEFORE = `## Juniper JunOS configuration
+version 22.4R1;
+system {
+    host-name Router-A;
+    login {
+        user admin {
+            uid 1000;
+            class super-user;
+            authentication {
+                encrypted-password "$6$abc123";
+            }
+        }
+    }
+    syslog {
+        file messages {
+            any notice;
+            authorization info;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        description "Uplink to ISP";
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+    ge-0/0/1 {
+        description "LAN segment";
+        unit 0 {
+            family inet {
+                address 10.0.0.1/30;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 192.168.1.1;
+    autonomous-system 65000;
+    static {
+        route 0.0.0.0/0 next-hop 10.0.0.2;
+    }
+}
+protocols {
+    ospf {
+        area 0.0.0.0 {
+            interface ge-0/0/0.0;
+            interface ge-0/0/1.0;
+        }
+    }
+}
+policy-options {
+    policy-statement POLICY-OUT {
+        term PERMIT-WEB {
+            from {
+                protocol static;
+                route-filter 0.0.0.0/0 exact;
+            }
+            then {
+                local-preference 100;
+                accept;
+            }
+        }
+        term DENY-ALL {
+            then reject;
+        }
+    }
+}
+firewall {
+    filter ACL-WEB {
+        term PERMIT-HTTP {
+            from {
+                destination-port [http https];
+            }
+            then accept;
+        }
+        term DENY-ALL {
+            then discard;
+        }
+    }
+}`;
+
+const SAMPLE_JUNIPER_AFTER = `## Juniper JunOS configuration
+version 22.4R1;
+system {
+    host-name Router-A;
+    login {
+        user admin {
+            uid 1000;
+            class super-user;
+            authentication {
+                encrypted-password "$6$abc123";
+            }
+        }
+        user operator {
+            uid 1001;
+            class operator;
+        }
+    }
+    syslog {
+        file messages {
+            any notice;
+            authorization info;
+        }
+        file security {
+            authorization any;
+        }
+    }
+    ntp {
+        server 10.0.0.100;
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        description "Uplink to ISP";
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+    ge-0/0/1 {
+        description "LAN segment";
+        unit 0 {
+            family inet {
+                address 10.0.0.1/30;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 172.16.0.1/32;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 172.16.0.1;
+    autonomous-system 65000;
+    static {
+        route 0.0.0.0/0 next-hop 10.0.0.2;
+        route 10.10.0.0/16 next-hop 10.0.0.2;
+    }
+}
+protocols {
+    ospf {
+        area 0.0.0.0 {
+            interface ge-0/0/0.0;
+            interface ge-0/0/1.0;
+            interface lo0.0 {
+                passive;
+            }
+        }
+    }
+}
+policy-options {
+    policy-statement POLICY-OUT {
+        term PERMIT-WEB {
+            from {
+                protocol static;
+                route-filter 0.0.0.0/0 exact;
+            }
+            then {
+                local-preference 150;
+                accept;
+            }
+        }
+        term PERMIT-INTERNAL {
+            from {
+                protocol ospf;
+            }
+            then accept;
+        }
+        term DENY-ALL {
+            then reject;
+        }
+    }
+}
+firewall {
+    filter ACL-WEB {
+        term PERMIT-HTTP {
+            from {
+                destination-port [http https 8080];
+            }
+            then accept;
+        }
+        term PERMIT-SSH {
+            from {
+                source-address 10.0.0.0/8;
+                destination-port ssh;
+            }
+            then accept;
+        }
+        term DENY-ALL {
+            then discard;
+        }
+    }
+}`;
 </script>
 </body>
 </html>
@@ -567,12 +856,16 @@ class _Handler(BaseHTTPRequestHandler):
         before_text: str = body.get("before", "")
         after_text: str = body.get("after", "")
         filter_kw: str | None = body.get("filter") or None
+        fmt: str | None = body.get("format") or None
 
-        before_secs = parse_sections(before_text)
-        after_secs = parse_sections(after_text)
+        before_secs, detected_fmt = parse_config(before_text, fmt)
+        after_secs, _ = parse_config(after_text, fmt or detected_fmt)
         diffs = diff_sections(before_secs, after_secs, filter_kw)
 
-        resp = json.dumps({"diffs": [d.to_dict() for d in diffs]}).encode()
+        resp = json.dumps({
+            "diffs": [d.to_dict() for d in diffs],
+            "format": detected_fmt,
+        }).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(resp)))
@@ -597,15 +890,22 @@ def serve(port: int = 8011) -> None:
 def _usage() -> None:
     print(textwrap.dedent(f"""\
         {BOLD}使い方:{RESET}
-          python config_diff.py <before.cfg> <after.cfg>          # CLI 差分表示
-          python config_diff.py <before.cfg> <after.cfg> --filter acl   # セクションフィルター
-          python config_diff.py <before.cfg> <after.cfg> --all    # 変更なしセクションも表示
-          python config_diff.py --web                             # Web UI (ポート 8011)
-          python config_diff.py --web --port 9000                 # ポート指定
+          python config_diff.py <before.cfg> <after.cfg>                     # CLI 差分表示（自動検出）
+          python config_diff.py <before.cfg> <after.cfg> --format juniper    # フォーマット指定
+          python config_diff.py <before.cfg> <after.cfg> --filter interface  # セクションフィルター
+          python config_diff.py <before.cfg> <after.cfg> --all               # 変更なしセクションも表示
+          python config_diff.py --web                                        # Web UI (ポート 8011)
+          python config_diff.py --web --port 9000                            # ポート指定
+
+        {BOLD}フォーマット:{RESET}
+          auto (デフォルト) — {{ }} ブレース数で自動判定
+          cisco             — Cisco IOS インデント形式
+          juniper           — Juniper JunOS ブレース形式
 
         {BOLD}例:{RESET}
-          python config_diff.py before.cfg after.cfg
-          python config_diff.py before.cfg after.cfg --filter route-map
+          python config_diff.py sample_before.cfg sample_after.cfg
+          python config_diff.py sample_before_juniper.cfg sample_after_juniper.cfg
+          python config_diff.py before.cfg after.cfg --filter firewall --format juniper
           python config_diff.py --web
     """))
 
@@ -637,9 +937,19 @@ if __name__ == "__main__":
         if idx < len(args):
             filter_kw = args[idx]
 
+    fmt: str | None = None
+    if "--format" in args:
+        idx = args.index("--format") + 1
+        if idx < len(args):
+            fmt = args[idx]
+
     show_unchanged = "--all" in args
 
-    before_secs = parse_sections(before_path.read_text(encoding="utf-8"))
-    after_secs = parse_sections(after_path.read_text(encoding="utf-8"))
+    before_text = before_path.read_text(encoding="utf-8")
+    after_text = after_path.read_text(encoding="utf-8")
+    before_secs, detected_fmt = parse_config(before_text, fmt)
+    after_secs, _ = parse_config(after_text, fmt or detected_fmt)
+
+    print(f"  {DIM}フォーマット: {detected_fmt}{RESET}")
     diffs = diff_sections(before_secs, after_secs, filter_kw)
     print_cli(diffs, show_unchanged)

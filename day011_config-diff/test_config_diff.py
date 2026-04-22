@@ -1,7 +1,7 @@
 """config_diff.py のテスト"""
 
 import pytest
-from config_diff import SectionDiff, diff_sections, parse_sections
+from config_diff import SectionDiff, detect_format, diff_sections, parse_config, parse_juniper_sections, parse_sections
 
 
 # ---------------------------------------------------------------------------
@@ -154,3 +154,227 @@ class TestDiffSections:
         diffs = diff_sections(self.before, self.after)
         d = diffs[0].to_dict()
         assert set(d.keys()) == {"name", "status", "before_lines", "after_lines", "unified_diff"}
+
+
+# ---------------------------------------------------------------------------
+# parse_juniper_sections
+# ---------------------------------------------------------------------------
+
+JUNIPER_TEXT = """\
+version 22.4R1;
+system {
+    host-name Router-A;
+    login {
+        user admin {
+            class super-user;
+        }
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+}
+routing-options {
+    router-id 192.168.1.1;
+    autonomous-system 65000;
+}
+firewall {
+    filter ACL-WEB {
+        term PERMIT-HTTP {
+            from {
+                destination-port [http https];
+            }
+            then accept;
+        }
+    }
+}
+"""
+
+
+class TestParseJuniperSections:
+    def test_top_level_blocks_detected(self):
+        secs = parse_juniper_sections(JUNIPER_TEXT)
+        assert "system" in secs
+        assert "interfaces" in secs
+        assert "routing-options" in secs
+        assert "firewall" in secs
+
+    def test_single_line_statement_detected(self):
+        secs = parse_juniper_sections(JUNIPER_TEXT)
+        assert "version 22.4R1" in secs
+
+    def test_block_content_captured(self):
+        secs = parse_juniper_sections(JUNIPER_TEXT)
+        combined = "\n".join(secs["interfaces"].lines)
+        assert "ge-0/0/0" in combined
+        assert "192.168.1.1/24" in combined
+
+    def test_nested_blocks_not_split_as_sections(self):
+        secs = parse_juniper_sections(JUNIPER_TEXT)
+        # ge-0/0/0 はトップレベルでないのでセクションにならない
+        assert "ge-0/0/0" not in secs
+
+    def test_comment_lines_skipped(self):
+        text = "# comment\ninterfaces {\n    ge-0/0/0 {\n    }\n}\n"
+        secs = parse_juniper_sections(text)
+        assert len(secs) == 1
+        assert "interfaces" in secs
+
+    def test_empty_text_returns_empty(self):
+        assert parse_juniper_sections("") == {}
+
+    def test_multiple_blocks_all_captured(self):
+        secs = parse_juniper_sections(JUNIPER_TEXT)
+        assert len(secs) >= 4
+
+
+# ---------------------------------------------------------------------------
+# detect_format
+# ---------------------------------------------------------------------------
+
+class TestDetectFormat:
+    def test_cisco_detected_by_bang_comments(self):
+        text = "!\nhostname R1\n!\ninterface Gi0/0\n ip address 1.1.1.1\n!\n"
+        assert detect_format(text) == "cisco"
+
+    def test_juniper_detected_by_braces(self):
+        text = "system {\n    host-name R1;\n}\ninterfaces {\n    ge-0/0/0 {\n    }\n}\n"
+        assert detect_format(text) == "juniper"
+
+    def test_empty_text_defaults_to_cisco(self):
+        assert detect_format("") == "cisco"
+
+
+# ---------------------------------------------------------------------------
+# parse_config
+# ---------------------------------------------------------------------------
+
+class TestParseConfig:
+    def test_auto_detects_cisco(self):
+        text = "!\nhostname R1\n!\ninterface Gi0/0\n ip address 1.1.1.1\n!\n"
+        _, fmt = parse_config(text)
+        assert fmt == "cisco"
+
+    def test_auto_detects_juniper(self):
+        _, fmt = parse_config(JUNIPER_TEXT)
+        assert fmt == "juniper"
+
+    def test_explicit_format_overrides_auto(self):
+        # Cisco テキストを juniper として解析するよう強制
+        text = "!\nhostname R1\n"
+        _, fmt = parse_config(text, fmt="juniper")
+        assert fmt == "juniper"
+
+    def test_returns_sections_dict(self):
+        secs, _ = parse_config(JUNIPER_TEXT)
+        assert isinstance(secs, dict)
+        assert len(secs) > 0
+
+
+# ---------------------------------------------------------------------------
+# Juniper diff
+# ---------------------------------------------------------------------------
+
+JUNIPER_BEFORE = """\
+system {
+    host-name Router-A;
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+}
+firewall {
+    filter ACL-WEB {
+        term PERMIT-HTTP {
+            from {
+                destination-port [http https];
+            }
+            then accept;
+        }
+    }
+}
+"""
+
+JUNIPER_AFTER = """\
+system {
+    host-name Router-A;
+    ntp {
+        server 10.0.0.1;
+    }
+}
+interfaces {
+    ge-0/0/0 {
+        unit 0 {
+            family inet {
+                address 192.168.1.1/24;
+            }
+        }
+    }
+    lo0 {
+        unit 0 {
+            family inet {
+                address 172.16.0.1/32;
+            }
+        }
+    }
+}
+firewall {
+    filter ACL-WEB {
+        term PERMIT-HTTP {
+            from {
+                destination-port [http https 8080];
+            }
+            then accept;
+        }
+    }
+}
+"""
+
+
+class TestJuniperDiff:
+    def setup_method(self):
+        self.before = parse_juniper_sections(JUNIPER_BEFORE)
+        self.after = parse_juniper_sections(JUNIPER_AFTER)
+
+    def _find(self, diffs: list[SectionDiff], name: str) -> SectionDiff | None:
+        return next((d for d in diffs if d.name == name), None)
+
+    def test_system_changed(self):
+        diffs = diff_sections(self.before, self.after)
+        d = self._find(diffs, "system")
+        assert d is not None
+        assert d.status == "changed"
+
+    def test_interfaces_changed(self):
+        diffs = diff_sections(self.before, self.after)
+        d = self._find(diffs, "interfaces")
+        assert d is not None
+        assert d.status == "changed"
+
+    def test_firewall_changed(self):
+        diffs = diff_sections(self.before, self.after)
+        d = self._find(diffs, "firewall")
+        assert d is not None
+        assert d.status == "changed"
+
+    def test_filter_by_firewall(self):
+        diffs = diff_sections(self.before, self.after, filter_keyword="firewall")
+        assert len(diffs) == 1
+        assert diffs[0].name == "firewall"
+
+    def test_unified_diff_shows_lo0_added(self):
+        diffs = diff_sections(self.before, self.after)
+        d = self._find(diffs, "interfaces")
+        assert d is not None
+        added_lines = [ln for ln in d.unified_diff if ln.startswith("+")]
+        assert any("lo0" in ln for ln in added_lines)
