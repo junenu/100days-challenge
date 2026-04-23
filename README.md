@@ -22,8 +22,9 @@
 | 009 | [markdown-preview](./day009_markdown-preview) | Node.js (ESM) | Markdown をターミナルでカラー整形表示する CLI ビューワー |
 | 010 | [json-diff](./day010_json-diff) | Python | 2 つの JSON を比較して差分を色付き表示する CLI ツール |
 | 011 | [config-diff](./day011_config-diff) | Python | Cisco/Juniper 設定ファイルをセクション単位で比較する CLI + Web UI |
+| 012 | [othello](./day012_othello) | Python + pygame | pygame 製オセロ。AI 対戦（Minimax depth=4 + α-β 枝刈り） |
 
-完了: 11 / 100
+完了: 12 / 100
 
 ---
 
@@ -33,7 +34,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 3 |
+| Python | 4 |
 | React (JSX) | 1 |
 
 ---
