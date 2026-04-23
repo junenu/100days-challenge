@@ -23,8 +23,9 @@
 | 010 | [json-diff](./day010_json-diff) | Python | 2 つの JSON を比較して差分を色付き表示する CLI ツール |
 | 011 | [config-diff](./day011_config-diff) | Python | Cisco/Juniper 設定ファイルをセクション単位で比較する CLI + Web UI |
 | 012 | [othello](./day012_othello) | Python + pygame | pygame 製オセロ。AI 対戦（Minimax depth=4 + α-β 枝刈り） |
+| 013 | [breakout](./day013_breakout) | Python + pygame | pygame 製ブロック崩し。3 レベル・HP 制ブロック・パドル角度コントロール |
 
-完了: 12 / 100
+完了: 13 / 100
 
 ---
 
@@ -34,7 +35,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 4 |
+| Python | 5 |
 | React (JSX) | 1 |
 
 ---
