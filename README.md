@@ -25,8 +25,9 @@
 | 012 | [othello](./day012_othello) | Python + pygame | pygame 製オセロ。AI 対戦（Minimax depth=4 + α-β 枝刈り） |
 | 013 | [breakout](./day013_breakout) | Python + pygame | pygame 製ブロック崩し。3 レベル・HP 制ブロック・パドル角度コントロール |
 | 014 | [py-share-server](./day014_py-share-server) | Python | 標準ライブラリだけで動くローカルファイル共有用の簡易 Web サーバー |
+| 015 | [log-analyzer](./day015_log-analyzer) | Python | アクセスログを集計する CLI。ステータス別・URL別・IP別ランキング表示 |
 
-完了: 14 / 100
+完了: 15 / 100
 
 ---
 
@@ -36,7 +37,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 6 |
+| Python | 7 |
 | React (JSX) | 1 |
 
 ---
