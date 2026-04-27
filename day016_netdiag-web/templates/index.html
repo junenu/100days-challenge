@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ネットワーク診断</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #263347;
+      --border:    #334155;
+      --text:      #e2e8f0;
+      --muted:     #94a3b8;
+      --primary:   #3b82f6;
+      --primary-h: #2563eb;
+      --ok:        #22c55e;
+      --warn:      #f59e0b;
+      --err:       #ef4444;
+      --mono: 'Courier New', Consolas, monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .header-icon {
+      width: 40px; height: 40px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-icon svg { width: 22px; height: 22px; fill: #fff; }
+    h1 { font-size: 20px; font-weight: 700; }
+    h1 span { color: var(--muted); font-size: 13px; font-weight: 400; margin-left: 8px; }
+
+    /* ── Layout ── */
+    .container { max-width: 960px; margin: 0 auto; }
+
+    /* ── Network Info Card ── */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .info-card .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+    }
+    .info-card .value {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      word-break: break-all;
+    }
+    .info-card .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      margin-bottom: 4px;
+      box-shadow: 0 0 6px var(--ok);
+    }
+    .info-card .dot.warn { background: var(--warn); box-shadow: 0 0 6px var(--warn); }
+    .info-card .dot.err  { background: var(--err);  box-shadow: 0 0 6px var(--err); }
+
+    /* ── Diagnostic Panels ── */
+    .panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .panel-icon {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .panel-icon svg { width: 16px; height: 16px; fill: #fff; }
+    .panel-icon.ping { background: #6366f1; }
+    .panel-icon.dns  { background: #0891b2; }
+    .panel-icon.http { background: #0d9488; }
+
+    .panel-title { font-size: 14px; font-weight: 600; }
+    .panel-desc  { font-size: 12px; color: var(--muted); }
+
+    .panel-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 12px; }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+    .input-row input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .input-row input:focus { border-color: var(--primary); }
+    .input-row input::placeholder { color: var(--muted); font-style: italic; }
+
+    button.run {
+      background: var(--primary);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 9px 18px;
+      white-space: nowrap;
+      transition: background .15s, opacity .15s;
+    }
+    button.run:hover { background: var(--primary-h); }
+    button.run:disabled { opacity: .5; cursor: not-allowed; }
+
+    /* ── Result box ── */
+    .result {
+      background: #0a111e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.7;
+      padding: 12px 14px;
+      min-height: 80px;
+      max-height: 260px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #a3e635;
+    }
+    .result.hidden { display: none; }
+    .result .ok  { color: var(--ok); }
+    .result .err { color: var(--err); }
+    .result .info { color: #7dd3fc; }
+    .result .dim  { color: var(--muted); }
+
+    /* spinner */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3a4.237 4.237 0 00-6 0zm-4-4l2 2a7.074 7.074 0 0110 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg>
+    </div>
+    <div>
+      <h1>ネットワーク診断 <span>Network Diagnostics</span></h1>
+    </div>
+  </header>
+
+  <!-- Network Info -->
+  <div class="info-grid" id="info-grid">
+    <div class="info-card"><div class="label">読み込み中...</div></div>
+  </div>
+
+  <!-- Diagnostic Panels -->
+  <div class="panels">
+
+    <!-- Ping -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon ping">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        </div>
+        <div>
+          <div class="panel-title">Ping</div>
+          <div class="panel-desc">ICMP 疎通確認（4 パケット）</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="input-row">
+          <input id="ping-input" type="text" placeholder="例: 8.8.8.8 / 192.168.1.1">
+          <button class="run" id="ping-btn" onclick="runPing()">実行</button>
+        </div>
+        <div class="result hidden" id="ping-result"></div>
+      </div>
+    </div>
+
+    <!-- DNS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon dns">
+          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/></svg>
+        </div>
+        <div>
+          <div class="panel-title">DNS</div>
+          <div class="panel-desc">ドメイン名前解決</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="input-row">
+          <input id="dns-input" type="text" placeholder="例: google.com / example.co.jp">
+          <button class="run" id="dns-btn" onclick="runDns()">実行</button>
+        </div>
+        <div class="result hidden" id="dns-result"></div>
+      </div>
+    </div>
+
+    <!-- HTTP -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-icon http">
+          <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zm6.93 6h-2.95a15.65 15.65 0 00-1.38-3.56A8.03 8.03 0 0118.92 8zM12 4.04c.83 1.2 1.48 2.53 1.91 3.96h-3.82c.43-1.43 1.08-2.76 1.91-3.96zM4.26 14C4.1 13.36 4 12.69 4 12s.1-1.36.26-2h3.38c-.08.66-.14 1.32-.14 2s.06 1.34.14 2H4.26zm.82 2h2.95c.32 1.25.78 2.45 1.38 3.56A7.987 7.987 0 015.08 16zm2.95-8H5.08a7.987 7.987 0 014.33-3.56A15.65 15.65 0 008.03 8zM12 19.96c-.83-1.2-1.48-2.53-1.91-3.96h3.82c-.43 1.43-1.08 2.76-1.91 3.96zM14.34 14H9.66c-.09-.66-.16-1.32-.16-2s.07-1.35.16-2h4.68c.09.65.16 1.32.16 2s-.07 1.34-.16 2zm.25 5.56c.6-1.11 1.06-2.31 1.38-3.56h2.95a8.03 8.03 0 01-4.33 3.56zM16.36 14c.08-.66.14-1.32.14-2s-.06-1.34-.14-2h3.38c.16.64.26 1.31.26 2s-.1 1.36-.26 2h-3.38z"/></svg>
+        </div>
+        <div>
+          <div class="panel-title">HTTP</div>
+          <div class="panel-desc">HTTP/HTTPS 疎通確認</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="input-row">
+          <input id="http-input" type="text" placeholder="例: google.com / https://example.com">
+          <button class="run" id="http-btn" onclick="runHttp()">実行</button>
+        </div>
+        <div class="result hidden" id="http-result"></div>
+      </div>
+    </div>
+
+  </div><!-- /panels -->
+</div><!-- /container -->
+
+<script>
+  // ── Network Info ──────────────────────────────────────────────
+  async function loadNetworkInfo() {
+    const grid = document.getElementById('info-grid');
+    try {
+      const res = await fetch('/api/network-info');
+      const d = await res.json();
+      const dotClass = d.status === 'ok' ? '' : d.status === 'partial' ? 'warn' : 'err';
+      const items = [
+        { label: 'IP アドレス',    value: d.ip,        dot: true },
+        { label: 'サブネット',      value: d.subnet },
+        { label: 'デフォルト GW',  value: d.gateway },
+        { label: 'インターフェース', value: d.interface },
+      ];
+      grid.innerHTML = items.map((item, i) => `
+        <div class="info-card">
+          ${i === 0 ? `<div class="dot ${dotClass}"></div>` : ''}
+          <div class="label">${item.label}</div>
+          <div class="value">${item.value || 'N/A'}</div>
+        </div>`).join('');
+    } catch {
+      grid.innerHTML = '<div class="info-card"><div class="label err">情報取得失敗</div></div>';
+    }
+  }
+
+  // ── Helper ────────────────────────────────────────────────────
+  function setLoading(btnId, resultId, loading) {
+    const btn = document.getElementById(btnId);
+    const res = document.getElementById(resultId);
+    btn.disabled = loading;
+    if (loading) {
+      btn.innerHTML = '<span class="spinner"></span>実行中';
+      res.classList.remove('hidden');
+      res.innerHTML = '<span class="dim">実行中...</span>';
+    } else {
+      btn.innerHTML = '実行';
+    }
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // Enter key support
+  function onEnter(inputId, fn) {
+    document.getElementById(inputId).addEventListener('keydown', e => {
+      if (e.key === 'Enter') fn();
+    });
+  }
+
+  // ── Ping ─────────────────────────────────────────────────────
+  async function runPing() {
+    const target = document.getElementById('ping-input').value.trim();
+    if (!target) { alert('ターゲットを入力してください'); return; }
+    setLoading('ping-btn', 'ping-result', true);
+    try {
+      const res = await fetch('/api/ping', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ target }),
+      });
+      const d = await res.json();
+      const el = document.getElementById('ping-result');
+      if (d.error) {
+        el.innerHTML = `<span class="err">エラー: ${escHtml(d.error)}</span>`;
+      } else {
+        const statusCls = d.success ? 'ok' : 'err';
+        const statusTxt = d.success ? '成功' : '失敗';
+        el.innerHTML =
+          `<span class="${statusCls}">[${statusTxt}]</span> ${escHtml(target)} — ${d.elapsed}s\n\n` +
+          escHtml(d.output);
+      }
+    } catch (e) {
+      document.getElementById('ping-result').innerHTML = `<span class="err">通信エラー: ${e}</span>`;
+    }
+    setLoading('ping-btn', 'ping-result', false);
+  }
+
+  // ── DNS ──────────────────────────────────────────────────────
+  async function runDns() {
+    const domain = document.getElementById('dns-input').value.trim();
+    if (!domain) { alert('ドメインを入力してください'); return; }
+    setLoading('dns-btn', 'dns-result', true);
+    try {
+      const res = await fetch('/api/dns', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ domain }),
+      });
+      const d = await res.json();
+      const el = document.getElementById('dns-result');
+      if (d.error) {
+        el.innerHTML = `<span class="err">エラー: ${escHtml(d.error)}</span>`;
+      } else {
+        const lines = [
+          `<span class="ok">[成功]</span> ${escHtml(domain)} — ${d.elapsed_ms} ms`,
+          '',
+          ...d.addresses.map(a =>
+            `  <span class="info">${a.family.padEnd(5)}</span>  ${escHtml(a.address)}`
+          ),
+        ];
+        el.innerHTML = lines.join('\n');
+      }
+    } catch (e) {
+      document.getElementById('dns-result').innerHTML = `<span class="err">通信エラー: ${e}</span>`;
+    }
+    setLoading('dns-btn', 'dns-result', false);
+  }
+
+  // ── HTTP ─────────────────────────────────────────────────────
+  async function runHttp() {
+    const url = document.getElementById('http-input').value.trim();
+    if (!url) { alert('URL を入力してください'); return; }
+    setLoading('http-btn', 'http-result', true);
+    try {
+      const res = await fetch('/api/http', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ url }),
+      });
+      const d = await res.json();
+      const el = document.getElementById('http-result');
+      if (d.error) {
+        el.innerHTML = `<span class="err">エラー: ${escHtml(d.error)}</span>`;
+      } else {
+        const statusCls = d.success ? 'ok' : 'err';
+        const lines = [
+          `<span class="${statusCls}">[${d.status_code} ${escHtml(d.status_text)}]</span> — ${d.elapsed_ms} ms`,
+          `<span class="dim">URL        :</span> ${escHtml(d.url)}`,
+          `<span class="dim">Content-Type:</span> ${escHtml(d.content_type || 'N/A')}`,
+          `<span class="dim">Server     :</span> ${escHtml(d.server || 'N/A')}`,
+        ];
+        if (d.redirected) {
+          lines.push(`<span class="dim">リダイレクト :</span> <span class="info">あり</span>`);
+        }
+        el.innerHTML = lines.join('\n');
+      }
+    } catch (e) {
+      document.getElementById('http-result').innerHTML = `<span class="err">通信エラー: ${e}</span>`;
+    }
+    setLoading('http-btn', 'http-result', false);
+  }
+
+  // ── Init ─────────────────────────────────────────────────────
+  loadNetworkInfo();
+  onEnter('ping-input', runPing);
+  onEnter('dns-input',  runDns);
+  onEnter('http-input', runHttp);
+</script>
+</body>
+</html>
