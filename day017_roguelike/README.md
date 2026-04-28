@@ -2,6 +2,8 @@
 
 ターミナルで動くローグライクダンジョン探索ゲーム。
 
+![screenshot](screenshot.png)
+
 ## 起動
 
 ```bash
