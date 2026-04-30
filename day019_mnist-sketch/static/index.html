@@ -51,7 +51,7 @@
       border-radius: 12px;
       cursor: crosshair;
       touch-action: none;
-      background: #1a1a1a;
+      background: #000000;
       box-shadow: 0 0 40px rgba(124, 140, 248, 0.15);
     }
 
@@ -213,7 +213,7 @@
     ctx.lineJoin = 'round';
     ctx.lineWidth = 20;
     ctx.strokeStyle = '#ffffff';
-    ctx.fillStyle = '#1a1a1a';
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // --- bar chart init ---
@@ -258,7 +258,7 @@
     canvas.addEventListener('touchend', () => { drawing = false; });
 
     function clearCanvas() {
-      ctx.fillStyle = '#1a1a1a';
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       resultDigit.textContent = '?';
       resultConf.textContent = '—';

@@ -7,9 +7,8 @@ from pathlib import Path
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from PIL import Image, ImageOps
+from PIL import Image
 from pydantic import BaseModel
 
 MODEL_PATH = Path("model.pkl")
@@ -37,9 +36,7 @@ def preprocess(data_url: str) -> np.ndarray:
     header, encoded = data_url.split(",", 1)
     img_bytes = base64.b64decode(encoded)
     img = Image.open(io.BytesIO(img_bytes)).convert("L")
-
-    img = ImageOps.invert(img)
-
+    # MNIST は黒背景(0)・白線(255) なので Canvas の描画そのままでよい
     img = img.resize((28, 28), Image.LANCZOS)
 
     arr = np.array(img, dtype=np.float32) / 255.0
