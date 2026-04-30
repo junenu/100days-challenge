@@ -26,8 +26,12 @@
 | 013 | [breakout](./day013_breakout) | Python + pygame | pygame 製ブロック崩し。3 レベル・HP 制ブロック・パドル角度コントロール |
 | 014 | [py-share-server](./day014_py-share-server) | Python | 標準ライブラリだけで動くローカルファイル共有用の簡易 Web サーバー |
 | 015 | [log-analyzer](./day015_log-analyzer) | Python | アクセスログを集計する CLI。ステータス別・URL別・IP別ランキング表示 |
+| 016 | [netdiag-web](./day016_netdiag-web) | React + Vite | ネットワーク診断 Web サービス。ping/DNS/ポートスキャンをブラウザから実行 |
+| 017 | [roguelike](./day017_roguelike) | Python + curses | ターミナルダンジョン探索。FOV・4 種モンスター・レベルアップ・5 フロア |
+| 018 | [rpg](./day018_rpg) | Python + pygame | トップダウンアクション RPG。剣・魔法・ボス戦・レベルアップシステム |
+| 019 | [mnist-sketch](./day019_mnist-sketch) | Python + FastAPI + scikit-learn | Canvas 手書き数字を ML モデル（MLP・97% 精度）がリアルタイム認識 |
 
-完了: 15 / 100
+完了: 19 / 100
 
 ---
 
@@ -37,8 +41,8 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 7 |
-| React (JSX) | 1 |
+| Python | 10 |
+| React (JSX) | 2 |
 
 ---
 

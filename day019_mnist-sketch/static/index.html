@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MNIST Sketch — 手書き数字認識</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0f0f0f;
+      color: #e8e8e8;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: #fff;
+    }
+
+    h1 span {
+      color: #7c8cf8;
+    }
+
+    .layout {
+      display: flex;
+      gap: 3rem;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .canvas-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      border-radius: 12px;
+      cursor: crosshair;
+      touch-action: none;
+      background: #1a1a1a;
+      box-shadow: 0 0 40px rgba(124, 140, 248, 0.15);
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    button {
+      padding: 0.6rem 1.4rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    button:active { transform: scale(0.96); }
+
+    #btn-clear {
+      background: #2a2a2a;
+      color: #ccc;
+      border: 1px solid #444;
+    }
+
+    #btn-clear:hover { background: #333; }
+
+    #btn-predict {
+      background: #7c8cf8;
+      color: #fff;
+    }
+
+    #btn-predict:hover { opacity: 0.88; }
+
+    .result-area {
+      min-width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .result-digit {
+      font-size: 6rem;
+      font-weight: 700;
+      text-align: center;
+      color: #7c8cf8;
+      line-height: 1;
+      min-height: 7rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-conf {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #888;
+    }
+
+    .result-conf span {
+      color: #b0baf8;
+      font-weight: 600;
+    }
+
+    .bar-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .bar-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.78rem;
+    }
+
+    .bar-label {
+      width: 1rem;
+      text-align: right;
+      color: #888;
+    }
+
+    .bar-track {
+      flex: 1;
+      height: 10px;
+      background: #222;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: #7c8cf8;
+      border-radius: 5px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    .bar-fill.top { background: #a5b4fc; }
+
+    .bar-pct {
+      width: 3rem;
+      text-align: right;
+      color: #666;
+      font-size: 0.72rem;
+    }
+
+    .hint {
+      font-size: 0.78rem;
+      color: #555;
+      text-align: center;
+    }
+
+    #status {
+      font-size: 0.82rem;
+      color: #666;
+      min-height: 1.2em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>MNIST <span>Sketch</span></h1>
+
+  <div class="layout">
+    <div class="canvas-area">
+      <canvas id="canvas" width="280" height="280"></canvas>
+      <div class="btn-row">
+        <button id="btn-clear">クリア</button>
+        <button id="btn-predict">認識する</button>
+      </div>
+      <p class="hint">マウスまたはタッチで数字を描いてください</p>
+      <p id="status"></p>
+    </div>
+
+    <div class="result-area">
+      <div class="result-digit" id="result-digit">?</div>
+      <div class="result-conf" id="result-conf">—</div>
+      <div class="bar-chart" id="bar-chart">
+        <!-- 0–9 bars injected by JS -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const btnClear = document.getElementById('btn-clear');
+    const btnPredict = document.getElementById('btn-predict');
+    const resultDigit = document.getElementById('result-digit');
+    const resultConf = document.getElementById('result-conf');
+    const barChart = document.getElementById('bar-chart');
+    const status = document.getElementById('status');
+
+    // --- canvas setup ---
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = 20;
+    ctx.strokeStyle = '#ffffff';
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // --- bar chart init ---
+    const bars = [];
+    for (let i = 0; i < 10; i++) {
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      const label = document.createElement('div');
+      label.className = 'bar-label';
+      label.textContent = i;
+      const track = document.createElement('div');
+      track.className = 'bar-track';
+      const fill = document.createElement('div');
+      fill.className = 'bar-fill';
+      track.appendChild(fill);
+      const pct = document.createElement('div');
+      pct.className = 'bar-pct';
+      pct.textContent = '0%';
+      row.appendChild(label);
+      row.appendChild(track);
+      row.appendChild(pct);
+      barChart.appendChild(row);
+      bars.push({ fill, pct });
+    }
+
+    // --- drawing ---
+    let drawing = false;
+
+    function pos(e) {
+      const r = canvas.getBoundingClientRect();
+      const src = e.touches ? e.touches[0] : e;
+      return { x: src.clientX - r.left, y: src.clientY - r.top };
+    }
+
+    canvas.addEventListener('mousedown', e => { drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); });
+    canvas.addEventListener('mousemove', e => { if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); });
+    canvas.addEventListener('mouseup', () => { drawing = false; });
+    canvas.addEventListener('mouseleave', () => { drawing = false; });
+
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); drawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }, { passive: false });
+    canvas.addEventListener('touchmove', e => { e.preventDefault(); if (!drawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); }, { passive: false });
+    canvas.addEventListener('touchend', () => { drawing = false; });
+
+    function clearCanvas() {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      resultDigit.textContent = '?';
+      resultConf.textContent = '—';
+      bars.forEach(b => { b.fill.style.width = '0%'; b.fill.classList.remove('top'); b.pct.textContent = '0%'; });
+      status.textContent = '';
+    }
+
+    btnClear.addEventListener('click', clearCanvas);
+
+    // --- predict ---
+    btnPredict.addEventListener('click', async () => {
+      const dataUrl = canvas.toDataURL('image/png');
+      status.textContent = '認識中...';
+      btnPredict.disabled = true;
+      try {
+        const res = await fetch('/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl }),
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        resultDigit.textContent = data.digit;
+        resultConf.innerHTML = `信頼度: <span>${(data.confidence * 100).toFixed(1)}%</span>`;
+        data.probabilities.forEach((p, i) => {
+          const pct = (p * 100).toFixed(1);
+          bars[i].fill.style.width = `${pct}%`;
+          bars[i].pct.textContent = `${pct}%`;
+          bars[i].fill.classList.toggle('top', i === data.digit);
+        });
+        status.textContent = '';
+      } catch (e) {
+        status.textContent = `エラー: ${e.message}`;
+      } finally {
+        btnPredict.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
