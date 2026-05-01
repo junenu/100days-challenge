@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Day020 — Tetris</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0f;
+      color: #e0e0e0;
+      font-family: 'Courier New', monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      user-select: none;
+    }
+
+    #app {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    canvas {
+      border: 2px solid #333;
+      display: block;
+    }
+
+    #side-panel {
+      width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel-block {
+      background: #111118;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      padding: 12px;
+    }
+
+    .panel-block h3 {
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: #666;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .panel-block .value {
+      font-size: 22px;
+      font-weight: bold;
+      color: #fff;
+    }
+
+    #controls {
+      background: #111118;
+      border: 1px solid #2a2a3a;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 11px;
+      line-height: 1.8;
+      color: #888;
+    }
+
+    #controls span {
+      color: #aaa;
+    }
+
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      z-index: 10;
+    }
+
+    #overlay h1 {
+      font-size: 36px;
+      color: #fff;
+      letter-spacing: 4px;
+    }
+
+    #overlay p {
+      color: #888;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    #overlay .final-score {
+      font-size: 20px;
+      color: #f0c040;
+    }
+
+    #start-btn {
+      margin-top: 8px;
+      padding: 10px 32px;
+      background: #2255cc;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 14px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    #start-btn:hover { background: #3366dd; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="board"></canvas>
+    <div id="side-panel">
+      <div class="panel-block">
+        <h3>Score</h3>
+        <div class="value" id="score">0</div>
+      </div>
+      <div class="panel-block">
+        <h3>Level</h3>
+        <div class="value" id="level">1</div>
+      </div>
+      <div class="panel-block">
+        <h3>Lines</h3>
+        <div class="value" id="lines">0</div>
+      </div>
+      <div class="panel-block">
+        <h3>Next</h3>
+        <canvas id="next-canvas"></canvas>
+      </div>
+      <div id="controls">
+        <div>← → <span>移動</span></div>
+        <div>↑  <span>回転</span></div>
+        <div>↓  <span>ソフトドロップ</span></div>
+        <div>Space <span>ハードドロップ</span></div>
+        <div>P  <span>ポーズ</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="overlay">
+    <h1>TETRIS</h1>
+    <p>DAY 020</p>
+    <button id="start-btn">START</button>
+  </div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

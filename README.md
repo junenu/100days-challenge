@@ -30,8 +30,9 @@
 | 017 | [roguelike](./day017_roguelike) | Python + curses | ターミナルダンジョン探索。FOV・4 種モンスター・レベルアップ・5 フロア |
 | 018 | [rpg](./day018_rpg) | Python + pygame | トップダウンアクション RPG。剣・魔法・ボス戦・レベルアップシステム |
 | 019 | [mnist-sketch](./day019_mnist-sketch) | Python + FastAPI + scikit-learn | Canvas 手書き数字を ML モデル（MLP・97% 精度）がリアルタイム認識 |
+| 020 | [tetris](./day020_tetris) | TypeScript + Vite + Canvas API | ブラウザ動作のテトリス。ゴーストピース・ウォールキック・レベルアップ対応 |
 
-完了: 19 / 100
+完了: 20 / 100
 
 ---
 
@@ -43,6 +44,7 @@
 | JavaScript (Node.js) | 3 |
 | Python | 10 |
 | React (JSX) | 2 |
+| TypeScript + Vite | 1 |
 
 ---
 
