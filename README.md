@@ -31,8 +31,10 @@
 | 018 | [rpg](./day018_rpg) | Python + pygame | トップダウンアクション RPG。剣・魔法・ボス戦・レベルアップシステム |
 | 019 | [mnist-sketch](./day019_mnist-sketch) | Python + FastAPI + scikit-learn | Canvas 手書き数字を ML モデル（MLP・97% 精度）がリアルタイム認識 |
 | 020 | [tetris](./day020_tetris) | TypeScript + Vite + Canvas API | ブラウザ動作のテトリス。ゴーストピース・ウォールキック・レベルアップ対応 |
+| 021 | [typing-game](./day021_typing-game) | Python + pygame | 日英対応タイピングゲーム。正確率・CPM 計測・IME 対応 |
+| 022 | [darts](./day022_darts) | Python + pygame | 501 ルールダーツ対戦。リアルなボード描画・CPU 自動対戦（ダブルフィニッシュ判断） |
 
-完了: 20 / 100
+完了: 22 / 100
 
 ---
 
@@ -42,7 +44,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 10 |
+| Python | 12 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 1 |
 
