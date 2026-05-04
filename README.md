@@ -33,8 +33,9 @@
 | 020 | [tetris](./day020_tetris) | TypeScript + Vite + Canvas API | ブラウザ動作のテトリス。ゴーストピース・ウォールキック・レベルアップ対応 |
 | 021 | [typing-game](./day021_typing-game) | Python + pygame | 日英対応タイピングゲーム。正確率・CPM 計測・IME 対応 |
 | 022 | [darts](./day022_darts) | Python + pygame | 501 ルールダーツ対戦。リアルなボード描画・CPU 自動対戦（ダブルフィニッシュ判断） |
+| 023 | [portfolio](./day023_portfolio) | Python | 静的サイトジェネレーター。Component 抽象基底クラスから派生した 16 種の再利用可能コンポーネントで架空人物のポートフォリオを生成 |
 
-完了: 22 / 100
+完了: 23 / 100
 
 ---
 
@@ -44,7 +45,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 3 |
-| Python | 12 |
+| Python | 13 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 1 |
 
