@@ -1,4 +1,5 @@
 __pycache__/
 *.pyc
 .playwright-mcp/
-.venv/
+.venv/day025_synth/node_modules
+day025_synth/dist

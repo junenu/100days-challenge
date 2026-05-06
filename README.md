@@ -35,8 +35,9 @@
 | 022 | [darts](./day022_darts) | Python + pygame | 501 ルールダーツ対戦。リアルなボード描画・CPU 自動対戦（ダブルフィニッシュ判断） |
 | 023 | [portfolio](./day023_portfolio) | Python | 静的サイトジェネレーター。Component 抽象基底クラスから派生した 16 種の再利用可能コンポーネントで架空人物のポートフォリオを生成 |
 | 024 | [2048](./day024_2048) | TypeScript + Vite + Canvas API | ブラウザ動作の 2048 パズル。矢印キー / スワイプ操作・ポップインアニメーション・ベストスコア永続化 |
+| 025 | [synth](./day025_synth) | TypeScript + Vite + Web Audio API | ブラウザ動作のポリフォニック・シンセサイザー。4 波形・ADSR・ディレイ・リバーブ・オシロスコープ付き |
 
-完了: 24 / 100
+完了: 25 / 100
 
 ---
 
@@ -48,7 +49,7 @@
 | JavaScript (Node.js) | 3 |
 | Python | 13 |
 | React (JSX) | 2 |
-| TypeScript + Vite | 2 |
+| TypeScript + Vite | 3 |
 
 ---
 
