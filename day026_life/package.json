@@ -1,0 +1,13 @@
+{
+  "name": "day026_life",
+  "version": "1.0.0",
+  "description": "Conway's Game of Life — terminal simulation",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

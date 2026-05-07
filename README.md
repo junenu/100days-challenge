@@ -36,8 +36,9 @@
 | 023 | [portfolio](./day023_portfolio) | Python | 静的サイトジェネレーター。Component 抽象基底クラスから派生した 16 種の再利用可能コンポーネントで架空人物のポートフォリオを生成 |
 | 024 | [2048](./day024_2048) | TypeScript + Vite + Canvas API | ブラウザ動作の 2048 パズル。矢印キー / スワイプ操作・ポップインアニメーション・ベストスコア永続化 |
 | 025 | [synth](./day025_synth) | TypeScript + Vite + Web Audio API | ブラウザ動作のポリフォニック・シンセサイザー。4 波形・ADSR・ディレイ・リバーブ・オシロスコープ付き |
+| 026 | [life](./day026_life) | Node.js (ESM) | ターミナル Conway's Game of Life。7 種プリセット・速度調整・カラー新生セル表示 |
 
-完了: 25 / 100
+完了: 26 / 100
 
 ---
 
@@ -46,7 +47,7 @@
 | 言語 | 回数 |
 | ---- | ---- |
 | Go | 4 |
-| JavaScript (Node.js) | 3 |
+| JavaScript (Node.js) | 4 |
 | Python | 13 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 3 |
