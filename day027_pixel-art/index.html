@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pixel Art Editor</title>
+  </head>
+  <body>
+    <div id="app">
+      <header>
+        <h1>Pixel Art Editor</h1>
+        <div class="header-controls">
+          <label>
+            Size:
+            <select id="canvas-size"></select>
+          </label>
+          <button id="btn-zoom-out" title="Zoom Out (-)">−</button>
+          <button id="btn-zoom-in" title="Zoom In (+)">+</button>
+          <button id="btn-grid" title="Toggle Grid (G)">Grid</button>
+          <button id="btn-clear" title="Clear Canvas">Clear</button>
+          <button id="btn-export" title="Export PNG">Export PNG</button>
+        </div>
+      </header>
+
+      <main>
+        <aside class="sidebar">
+          <section class="tool-section">
+            <h2>Tools</h2>
+            <div class="tools">
+              <button class="tool-btn" data-tool="pencil" title="Pencil (P)">✏️ Pencil</button>
+              <button class="tool-btn" data-tool="eraser" title="Eraser (E)">🧹 Eraser</button>
+              <button class="tool-btn" data-tool="fill" title="Fill (F)">🪣 Fill</button>
+              <button class="tool-btn" data-tool="eyedropper" title="Eyedropper (I)">💉 Pick</button>
+            </div>
+          </section>
+
+          <section class="tool-section">
+            <h2>Color</h2>
+            <div class="color-picker-row">
+              <div id="active-color-preview"></div>
+              <input type="color" id="active-color" value="#000000" />
+            </div>
+            <div id="palette"></div>
+          </section>
+
+          <section class="tool-section">
+            <h2>History</h2>
+            <div class="history-btns">
+              <button id="btn-undo" title="Undo (Ctrl+Z)">↩ Undo</button>
+              <button id="btn-redo" title="Redo (Ctrl+Y)">↪ Redo</button>
+            </div>
+          </section>
+
+          <section class="tool-section shortcuts">
+            <h2>Shortcuts</h2>
+            <ul>
+              <li><kbd>P</kbd> Pencil</li>
+              <li><kbd>E</kbd> Eraser</li>
+              <li><kbd>F</kbd> Fill</li>
+              <li><kbd>I</kbd> Eyedrop</li>
+              <li><kbd>G</kbd> Grid</li>
+              <li><kbd>Ctrl+Z</kbd> Undo</li>
+              <li><kbd>Ctrl+Y</kbd> Redo</li>
+            </ul>
+          </section>
+        </aside>
+
+        <div class="canvas-wrapper">
+          <canvas id="art-canvas"></canvas>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -37,8 +37,9 @@
 | 024 | [2048](./day024_2048) | TypeScript + Vite + Canvas API | ブラウザ動作の 2048 パズル。矢印キー / スワイプ操作・ポップインアニメーション・ベストスコア永続化 |
 | 025 | [synth](./day025_synth) | TypeScript + Vite + Web Audio API | ブラウザ動作のポリフォニック・シンセサイザー。4 波形・ADSR・ディレイ・リバーブ・オシロスコープ付き |
 | 026 | [life](./day026_life) | Node.js (ESM) | ターミナル Conway's Game of Life。7 種プリセット・速度調整・カラー新生セル表示 |
+| 027 | [pixel-art](./day027_pixel-art) | TypeScript + Vite + Canvas API | ブラウザ動作のピクセルアートエディタ。Flood Fill・Undo/Redo・PNG エクスポート・外部依存ゼロ |
 
-完了: 26 / 100
+完了: 27 / 100
 
 ---
 
@@ -50,7 +51,7 @@
 | JavaScript (Node.js) | 4 |
 | Python | 13 |
 | React (JSX) | 2 |
-| TypeScript + Vite | 3 |
+| TypeScript + Vite | 4 |
 
 ---
 
