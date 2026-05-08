@@ -5,6 +5,8 @@
 TypeScript + Vite + Canvas API で作ったブラウザ動作のピクセルアートエディタ。
 16 色パレット・フラッドフィル・Undo/Redo・PNG エクスポートを備えた、外部依存ゼロのクリエイティブツール。
 
+![screenshot](./screenshot.png)
+
 ## 技術スタック
 
 - Language: TypeScript
