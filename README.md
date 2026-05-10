@@ -38,8 +38,10 @@
 | 025 | [synth](./day025_synth) | TypeScript + Vite + Web Audio API | ブラウザ動作のポリフォニック・シンセサイザー。4 波形・ADSR・ディレイ・リバーブ・オシロスコープ付き |
 | 026 | [life](./day026_life) | Node.js (ESM) | ターミナル Conway's Game of Life。7 種プリセット・速度調整・カラー新生セル表示 |
 | 027 | [pixel-art](./day027_pixel-art) | TypeScript + Vite + Canvas API | ブラウザ動作のピクセルアートエディタ。Flood Fill・Undo/Redo・PNG エクスポート・外部依存ゼロ |
+| 028 | [img-resize](./day028_img-resize) | TypeScript + Vite + Canvas API | ブラウザ動作の画像リサイザー。PNG/JPEG/WebP 対応・アスペクト比ロック・10 種プリセット・品質スライダー |
+| 029 | [mandelbrot](./day029_mandelbrot) | TypeScript + Vite + Canvas API | マンデルブロ集合エクスプローラー。ズーム/パン・スムースカラーリング・5 種カラーマップ |
 
-完了: 27 / 100
+完了: 29 / 100
 
 ---
 
@@ -51,7 +53,7 @@
 | JavaScript (Node.js) | 4 |
 | Python | 13 |
 | React (JSX) | 2 |
-| TypeScript + Vite | 4 |
+| TypeScript + Vite | 6 |
 
 ---
 
