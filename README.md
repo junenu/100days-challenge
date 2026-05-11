@@ -40,8 +40,9 @@
 | 027 | [pixel-art](./day027_pixel-art) | TypeScript + Vite + Canvas API | ブラウザ動作のピクセルアートエディタ。Flood Fill・Undo/Redo・PNG エクスポート・外部依存ゼロ |
 | 028 | [img-resize](./day028_img-resize) | TypeScript + Vite + Canvas API | ブラウザ動作の画像リサイザー。PNG/JPEG/WebP 対応・アスペクト比ロック・10 種プリセット・品質スライダー |
 | 029 | [mandelbrot](./day029_mandelbrot) | TypeScript + Vite + Canvas API | マンデルブロ集合エクスプローラー。ズーム/パン・スムースカラーリング・5 種カラーマップ |
+| 030 | [reaction-diffusion](./day030_reaction-diffusion) | TypeScript + Vite + Canvas API | Gray-Scott 反応拡散シミュレーター。6 種プリセット・4 種カラーテーマ・クリックで化学物質注入 |
 
-完了: 29 / 100
+完了: 30 / 100
 
 ---
 
@@ -53,7 +54,7 @@
 | JavaScript (Node.js) | 4 |
 | Python | 13 |
 | React (JSX) | 2 |
-| TypeScript + Vite | 6 |
+| TypeScript + Vite | 7 |
 
 ---
 

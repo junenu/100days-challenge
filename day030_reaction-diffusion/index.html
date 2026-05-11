@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Day030 — Reaction Diffusion</title>
+    <link rel="stylesheet" href="./src/style.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="sidebar">
+        <div id="header">
+          <h1>Reaction Diffusion</h1>
+          <p class="subtitle">Gray-Scott Model</p>
+        </div>
+
+        <div class="section">
+          <h3>Presets</h3>
+          <div id="presets">
+            <button class="preset-btn active" data-preset="coral">Coral</button>
+            <button class="preset-btn" data-preset="maze">Maze</button>
+            <button class="preset-btn" data-preset="spots">Spots</button>
+            <button class="preset-btn" data-preset="worms">Worms</button>
+            <button class="preset-btn" data-preset="mitosis">Mitosis</button>
+            <button class="preset-btn" data-preset="fingerprint">Fingerprint</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Parameters</h3>
+          <div class="param-row">
+            <label>Feed <code>f</code></label>
+            <input type="range" id="f-slider" min="0.010" max="0.100" step="0.001" value="0.0545" />
+            <span id="f-val">0.0545</span>
+          </div>
+          <div class="param-row">
+            <label>Kill <code>k</code></label>
+            <input type="range" id="k-slider" min="0.040" max="0.080" step="0.001" value="0.0620" />
+            <span id="k-val">0.0620</span>
+          </div>
+          <div class="param-row">
+            <label>Speed</label>
+            <input type="range" id="speed-slider" min="1" max="20" step="1" value="8" />
+            <span id="speed-val">8</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Color Theme</h3>
+          <div id="themes">
+            <button class="theme-btn active" data-theme="ocean">Ocean</button>
+            <button class="theme-btn" data-theme="fire">Fire</button>
+            <button class="theme-btn" data-theme="plasma">Plasma</button>
+            <button class="theme-btn" data-theme="gray">Gray</button>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Controls</h3>
+          <div id="ctrl-buttons">
+            <button id="btn-pause">Pause</button>
+            <button id="btn-reset">Reset</button>
+            <button id="btn-random">Randomize</button>
+          </div>
+          <p class="hint">Click or drag on canvas to inject chemical</p>
+        </div>
+
+        <div id="status-bar">
+          <span id="fps-display">FPS: --</span>
+          <span id="gen-display">Gen: 0</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap">
+        <canvas id="canvas" width="256" height="256"></canvas>
+      </div>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
