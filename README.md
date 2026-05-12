@@ -41,8 +41,9 @@
 | 028 | [img-resize](./day028_img-resize) | TypeScript + Vite + Canvas API | ブラウザ動作の画像リサイザー。PNG/JPEG/WebP 対応・アスペクト比ロック・10 種プリセット・品質スライダー |
 | 029 | [mandelbrot](./day029_mandelbrot) | TypeScript + Vite + Canvas API | マンデルブロ集合エクスプローラー。ズーム/パン・スムースカラーリング・5 種カラーマップ |
 | 030 | [reaction-diffusion](./day030_reaction-diffusion) | TypeScript + Vite + Canvas API | Gray-Scott 反応拡散シミュレーター。6 種プリセット・4 種カラーテーマ・クリックで化学物質注入 |
+| 031 | [booklog](./day031_booklog) | Python + PostgreSQL + Docker Compose | psycopg2 接続の読書ログ CLI。追加・一覧・評価・統計・自動マイグレーション |
 
-完了: 30 / 100
+完了: 31 / 100
 
 ---
 
@@ -52,7 +53,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 4 |
-| Python | 13 |
+| Python | 14 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 7 |
 
