@@ -64,6 +64,55 @@ ping_results     — ping 実行結果 (RTT, 成否)
 traceroute_hops  — traceroute のホップ情報
 ```
 
+## SQL クエリ集
+
+psql への接続:
+
+```bash
+docker compose exec db psql -U netwatch -d netwatch
+```
+
+### テーブル一覧
+
+```sql
+\dt
+```
+
+### ホスト一覧
+
+```sql
+SELECT * FROM hosts;
+```
+
+### ping 結果（新しい順）
+
+```sql
+SELECT * FROM ping_results ORDER BY checked_at DESC;
+```
+
+### traceroute ホップ一覧（ホップ番号順）
+
+```sql
+SELECT * FROM traceroute_hops ORDER BY hop_num;
+```
+
+### ホスト別 ping 統計
+
+```sql
+SELECT
+  h.name,
+  h.address,
+  COUNT(*) AS total,
+  SUM(CASE WHEN p.success THEN 1 ELSE 0 END) AS success_count,
+  ROUND(AVG(p.rtt_ms)::numeric, 2) AS avg_rtt_ms,
+  ROUND(MIN(p.rtt_ms)::numeric, 2) AS min_rtt_ms,
+  ROUND(MAX(p.rtt_ms)::numeric, 2) AS max_rtt_ms
+FROM hosts h
+JOIN ping_results p ON p.host_id = h.id
+GROUP BY h.id, h.name, h.address
+ORDER BY h.id;
+```
+
 ## デモ
 
 ```
