@@ -42,8 +42,10 @@
 | 029 | [mandelbrot](./day029_mandelbrot) | TypeScript + Vite + Canvas API | マンデルブロ集合エクスプローラー。ズーム/パン・スムースカラーリング・5 種カラーマップ |
 | 030 | [reaction-diffusion](./day030_reaction-diffusion) | TypeScript + Vite + Canvas API | Gray-Scott 反応拡散シミュレーター。6 種プリセット・4 種カラーテーマ・クリックで化学物質注入 |
 | 031 | [booklog](./day031_booklog) | Python + PostgreSQL + Docker Compose | psycopg2 接続の読書ログ CLI。追加・一覧・評価・統計・自動マイグレーション |
+| 032 | [netwatch](./day032_netwatch) | Python + PostgreSQL + Docker Compose | ping/traceroute 結果を DB 記録するネットワーク監視 CLI。可用性レポート・定期監視ループ・Rich 表示 |
+| 033 | [dataview](./day033_dataview) | Python + Streamlit + Plotly | CSV 分析ダッシュボード。6 種グラフ・相関ヒートマップ・サイドバーフィルター・CSV ダウンロード |
 
-完了: 31 / 100
+完了: 33 / 100
 
 ---
 
@@ -53,7 +55,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 4 |
-| Python | 14 |
+| Python | 16 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 7 |
 
