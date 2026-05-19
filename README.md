@@ -44,8 +44,9 @@
 | 031 | [booklog](./day031_booklog) | Python + PostgreSQL + Docker Compose | psycopg2 接続の読書ログ CLI。追加・一覧・評価・統計・自動マイグレーション |
 | 032 | [netwatch](./day032_netwatch) | Python + PostgreSQL + Docker Compose | ping/traceroute 結果を DB 記録するネットワーク監視 CLI。可用性レポート・定期監視ループ・Rich 表示 |
 | 033 | [dataview](./day033_dataview) | Python + Streamlit + Plotly | CSV 分析ダッシュボード。6 種グラフ・相関ヒートマップ・サイドバーフィルター・CSV ダウンロード |
+| 034 | [tab-timer](./day034_tab-timer) | JavaScript + Chrome Extensions API (MV3) | タブ閲覧時間計測 Chrome 拡張。ドメイン別ランキング・バーグラフ・ファビコン・リアルタイム更新 |
 
-完了: 33 / 100
+完了: 34 / 100
 
 ---
 
@@ -55,6 +56,7 @@
 | ---- | ---- |
 | Go | 4 |
 | JavaScript (Node.js) | 4 |
+| JavaScript (Chrome Extension) | 1 |
 | Python | 16 |
 | React (JSX) | 2 |
 | TypeScript + Vite | 7 |
